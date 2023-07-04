@@ -1,10 +1,11 @@
 ---
 version: '3.0'
 
-# Build BUT DON'T PUSH - IMAGES WILL BE BUILT BY CICD.
-# The fragmenstein-base image must be built manually in CICD. Only needs doing when Fragmenstein or dependencies change.
-# The fragmenstein image is based on the base image is built automatically by CICD when a new tag is made.
-# The nextflow image is also built automatically when the repo is tagged.
+# By deafult a "latest" tag is applied to the images.
+# To refine the tag, build with a suitable .env that defines IMAGE_TAG
+# or build with a command line argument: -
+#
+#   docker-compose build --build-arg IMAGE_TAG=1.0.0
 
 services:
 
@@ -12,16 +13,16 @@ services:
     build:
       context: .
       dockerfile: Dockerfile-fragmenstein-base
-    image: informaticsmatters/squonk2-fragmenstein-base:stable
+    image: informaticsmatters/squonk2-fragmenstein-base:${IMAGE_TAG:-latest}
 
   fragmenstein:
     build:
       context: .
       dockerfile: Dockerfile-fragmenstein
-    image: informaticsmatters/squonk2-fragmenstein:stable
+    image: informaticsmatters/squonk2-fragmenstein:${IMAGE_TAG:-latest}
 
   nextflow:
     build:
       context: .
       dockerfile: Dockerfile-nextflow
-    image: informaticsmatters/squonk2-fragmenstein-nextflow:stable
+    image: informaticsmatters/squonk2-fragmenstein-nextflow:${IMAGE_TAG:-latest}
