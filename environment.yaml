@@ -1,0 +1,8 @@
+name: fragmenstein
+channels:
+- conda-forge
+dependencies:
+- pip=23.1.2
+- pip:
+  - Fragmenstein==0.10.6
+  - im-data-manager-job-utilities==1.1.1

@@ -1,0 +1,977 @@
+---
+# Fragmenstein jobs.
+# See https://github.com/matteoferla/Fragmenstein
+kind: DataManagerJobDefinition
+kind-version: '2021.1'
+name: Fragmenstein jobs for fragment merging
+collection: fragmenstein
+
+jobs:
+  fragmenstein-combine:
+    name: Combine fragments into a single molecule
+    description: >-
+      Given 2 or more fragment molecules generate a merged molecule that combines aspects of those fragments.
+      The merged molecules are minimised within the context of the protein and results written to a SD-file.
+    version: '1.0.0'
+    category: comp chem
+    keywords:
+    - fragmenstein
+    - fbdd
+    doc-url: fragmenstein/fragmenstein.md
+    image:
+      name: informaticsmatters/squonk2-fragmenstein
+      tag: stable
+      project-directory: /data
+      working-directory: /data
+      pull-secret: im-squonk-fragmenstein
+      memory: 3Gi
+      fix-permissions: true
+    command: >-
+      /code/merger.py --fragments{% for fragment in fragments %} '{{ fragment }}'{% endfor %}
+      --protein '{{ protein }}'
+      --outfile '{{ outfile }}'
+      --count {{ count }}
+      {% if keepHydrogens %}--keep-hydrogens{% endif %}
+      --ref-mols-prop-name ref_mols
+      {% if fragIdField %}--frag-id-field '{{ fragIdField }}'{% endif %}
+      {% if smilesFieldName %}--smiles-prop-name '{{ smilesFieldName }}'{% endif %}
+      {% if proteinFieldName %}--protein-prop-name '{{ proteinFieldName }}'{% endif %}
+      {% if proteinFieldValue %}--protein-prop-value '{{ proteinFieldValue }}'{% endif %}
+      --work-dir {{ DM_INSTANCE_DIRECTORY }}/output
+    variables:
+      order:
+        inputs:
+        - fragments
+        - protein
+        options:
+        - outfile
+        - count
+        - keepHydrogens
+        - fragIdField
+        - smilesFieldName
+        - proteinFieldName
+        - proteinFieldValue
+      inputs:
+        type: object
+        required:
+        - fragments
+        - protein
+        properties:
+          fragments:
+            title: Fragment molecules
+            multiple: true
+            mime-types:
+            - chemical/x-mdl-molfile
+            - chemical/x-mdl-sdfile
+            type: file
+          protein:
+            title: PDB file for protein
+            mime-types:
+            - chemical/x-pdb
+            type: file
+      outputs:
+        type: object
+        properties:
+          outputs:
+            title: Merged molecules
+            mime-types:
+            - chemical/x-mdl-sdfile
+            creates: '{{ outfile }}'
+            type: file
+            annotation-properties:
+              fields-descriptor:
+                origin: squonk2-job
+                description: Fragmenstein combine
+                fields:
+                  IDX:
+                    type: string
+                    description: Molecule index
+                    required: true
+                  DDG:
+                    type: number
+                    description: Delta deta G
+                    required: true
+                  RMSD:
+                    type: number
+                    description: RMSD from input fragments
+                    required: true
+                  ref_mols:
+                    type: string
+                    description: Input IDs
+                    required: true
+                  smiles:
+                    type: string
+                    expression: '{{ smilesFieldName }}'
+                    description: Molecule SMILES
+                  protein:
+                    type: string
+                    expression: '{{ proteinFieldName }}'
+                    description: PDB file used
+              service-execution:
+                service_ref: 'https://discourse.squonk.it/t/job-fragmenstein/110'
+              derived-from: fragments
+      options:
+        type: object
+        required:
+        - outfile
+        - count
+        - keepHydrogens
+        properties:
+          outfile:
+            title: Output file name
+            type: string
+            default: merged.sdf
+            pattern: "^[A-Za-z0-9_/.-]+[.]sdf$"
+          count:
+            title: Number of molecules to generate
+            type: integer
+            default: 1
+            minimum: 1
+          keepHydrogens:
+            title: Keep hydrogens in the outputs
+            type: boolean
+            default: false
+          fragIdField:
+            title: Input field name containing the fragment ID
+            type: string
+            default: _Name
+          smilesFieldName:
+            title: Include SMILES in output using this field name
+            type: string
+          proteinFieldName:
+            title: Include PDB details in output using this field name
+            type: string
+          proteinFieldValue:
+            title: Use this value for the proteinFieldName (if not specified the file name is used)
+            type: string
+    tests:
+      simple-execution:
+        inputs:
+          fragments:
+          - data/diamond-x0216_A.mol
+          - data/diamond-x0259_A.mol
+          protein: data/mac1.pdb
+        options:
+          outfile: results.sdf
+          count: 1
+        checks:
+          exitCode: 0
+          outputs:
+          - name: results.sdf
+            checks:
+            - exists: true
+      extra-props:
+        inputs:
+          fragments:
+          - data/diamond-x0216_A.mol
+          - data/diamond-x0259_A.mol
+          protein: data/mac1.pdb
+        options:
+          outfile: results.sdf
+          count: 1
+          proteinFieldName: ref_pdb
+          proteinFieldValue: mybigfatprotein
+        checks:
+          exitCode: 0
+          outputs:
+          - name: results.sdf
+            checks:
+            - exists: true
+
+  fragmenstein-place-file:
+    name: Place molecules onto fragments
+    description: >-
+      Place a set of SMILES from an input file onto fragment molecules to generate a conformer that mimics those fragments.
+      The placed molecules are minimised within the context of the protein and results written to a SD-file.
+    version: '1.0.0'
+    category: comp chem
+    keywords:
+    - fragmenstein
+    - fbdd
+    doc-url: fragmenstein/fragmenstein.md
+    image:
+      name: informaticsmatters/squonk2-fragmenstein
+      tag: stable
+      project-directory: /data
+      working-directory: /data
+      pull-secret: im-squonk-fragmenstein
+      memory: 3Gi
+      fix-permissions: true
+    command: >-
+      /code/merger.py --fragments{% for fragment in fragments %} '{{ fragment }}'{% endfor %}
+      --smiles-file {{ smiles }}
+      --protein '{{ protein }}'
+      --outfile '{{ outfile }}'
+      --count {{ count }}
+      {% if keepHydrogens %}--keep-hydrogens{% endif %}
+      --ref-mols-prop-name ref_mols
+      {% if fragIdField %}--frag-id-field '{{ fragIdField }}'{% endif %}
+      {% if smilesFieldName %}--smiles-prop-name '{{ smilesFieldName }}'{% endif %}
+      {% if proteinFieldName %}--protein-prop-name '{{ proteinFieldName }}'{% endif %}
+      {% if proteinFieldValue %}--protein-prop-value '{{ proteinFieldValue }}'{% endif %}
+      --work-dir {{ DM_INSTANCE_DIRECTORY }}/output
+    variables:
+      order:
+        inputs:
+        - fragments
+        - smiles
+        - protein
+        options:
+        - outfile
+        - count
+        - keepHydrogens
+        - fragIdField
+        - smilesFieldName
+        - proteinFieldName
+        - proteinFieldValue
+      inputs:
+        type: object
+        required:
+        - fragments
+        - smiles
+        - protein
+        properties:
+          fragments:
+            title: Fragment molecules
+            multiple: true
+            mime-types:
+            - chemical/x-mdl-molfile
+            - chemical/x-mdl-sdfile
+            type: file
+          smiles:
+            title: File with SMILES to place
+            mime-types:
+            - squonk/x-smiles
+            - text/csv
+            - text/tab-separated-values
+            type: file
+          protein:
+            title: PDB file for protein
+            mime-types:
+            - chemical/x-pdb
+            type: file
+      outputs:
+        type: object
+        properties:
+          outputs:
+            title: Merged molecules
+            mime-types:
+            - chemical/x-mdl-sdfile
+            creates: '{{ outfile }}'
+            type: file
+            annotation-properties:
+              fields-descriptor:
+                origin: squonk2-job
+                description: Fragmenstein combine
+                fields:
+                  IDX:
+                    type: string
+                    description: Molecule index
+                    required: true
+                  DDG:
+                    type: number
+                    description: Delta deta G
+                    required: true
+                  RMSD:
+                    type: number
+                    description: RMSD from input fragments
+                    required: true
+                  ref_mols:
+                    type: string
+                    description: Input IDs
+                    required: true
+                  smiles:
+                    type: string
+                    expression: '{{ smilesFieldName }}'
+                    description: Molecule SMILES
+                  protein:
+                    type: string
+                    expression: '{{ proteinFieldName }}'
+                    description: PDB file used
+              service-execution:
+                service_ref: 'https://discourse.squonk.it/t/job-fragmenstein/110'
+              derived-from: fragments
+      options:
+        type: object
+        required:
+        - outfile
+        - count
+        - keepHydrogens
+        properties:
+          outfile:
+            title: Output file name
+            type: string
+            default: merged.sdf
+            pattern: "^[A-Za-z0-9_/.-]+[.]sdf$"
+          count:
+            title: Number of molecules to generate
+            type: integer
+            default: 1
+            minimum: 1
+          keepHydrogens:
+            title: Keep hydrogens in the outputs
+            type: boolean
+            default: false
+          fragIdField:
+            title: Input field name containing the fragment ID
+            type: string
+            default: _Name
+          smilesFieldName:
+            title: Includes SMILES in output using this field name
+            type: string
+          proteinFieldName:
+            title: Include PDB details in output using this field name
+            type: string
+          proteinFieldValue:
+            title: Use this value for the proteinFieldName (if not specified the file name is used)
+            type: string
+    tests:
+      simple-execution:
+        inputs:
+          fragments:
+          - data/x0032_0A.mol
+          - data/x0103_0A.mol
+          protein: data/apo_example1.pdb
+          smiles: data/inputs.smi
+        options:
+          outfile: results.sdf
+          count: 1
+        checks:
+          exitCode: 0
+          outputs:
+          - name: results.sdf
+            checks:
+            - exists: true
+
+  fragmenstein-place-string:
+    name: Place molecules onto fragments
+    description: >-
+      Place a set of user entered SMILES onto fragment molecules to generate a conformer that mimics those fragments.
+      The placed molecules are minimised within the context of the protein and results written to a SD-file.
+    version: '1.0.0'
+    category: comp chem
+    keywords:
+    - fragmenstein
+    - fbdd
+    doc-url: fragmenstein/fragmenstein.md
+    image:
+      name: informaticsmatters/squonk2-fragmenstein
+      tag: stable
+      project-directory: /data
+      working-directory: /data
+      pull-secret: im-squonk-fragmenstein
+      memory: 3Gi
+      fix-permissions: true
+    command: >-
+      /code/merger.py --fragments{% for fragment in fragments %} '{{ fragment }}'{% endfor %}
+      --smiles-strings {% for smi in smiles %} '{{ smi }}'{% endfor %}
+      --protein '{{ protein }}'
+      --outfile '{{ outfile }}'
+      --count {{ count }}
+      {% if keepHydrogens %}--keep-hydrogens{% endif %}
+      --ref-mols-prop-name ref_mols
+      {% if fragIdField %}--frag-id-field '{{ fragIdField }}'{% endif %}
+      {% if smilesFieldName %}--smiles-prop-name '{{ smilesFieldName }}'{% endif %}
+      {% if proteinFieldName %}--protein-prop-name '{{ proteinFieldName }}'{% endif %}
+      {% if proteinFieldValue %}--protein-prop-value '{{ proteinFieldValue }}'{% endif %}
+      --work-dir {{ DM_INSTANCE_DIRECTORY }}/output
+    variables:
+      order:
+        inputs:
+        - fragments
+        - protein
+        options:
+        - smiles
+        - outfile
+        - count
+        - keepHydrogens
+        - fragIdField
+        - smilesFieldName
+        - proteinFieldName
+        - proteinFieldValue
+      inputs:
+        type: object
+        required:
+        - fragments
+        - protein
+        properties:
+          fragments:
+            title: Fragment molecules
+            multiple: true
+            mime-types:
+            - chemical/x-mdl-molfile
+            - chemical/x-mdl-sdfile
+            type: file
+          protein:
+            title: PDB file for protein
+            mime-types:
+            - chemical/x-pdb
+            type: file
+      outputs:
+        type: object
+        properties:
+          outputs:
+            title: Merged molecules
+            mime-types:
+            - chemical/x-mdl-sdfile
+            creates: '{{ outfile }}'
+            type: file
+            annotation-properties:
+              fields-descriptor:
+                origin: squonk2-job
+                description: Fragmenstein combine
+                fields:
+                  IDX:
+                    type: string
+                    description: Molecule index
+                    required: true
+                  DDG:
+                    type: number
+                    description: Delta deta G
+                    required: true
+                  RMSD:
+                    type: number
+                    description: RMSD from input fragments
+                    required: true
+                  ref_mols:
+                    type: string
+                    description: Input IDs
+                    required: true
+                  smiles:
+                    type: string
+                    expression: '{{ smilesFieldName }}'
+                    description: Molecule SMILES
+                  protein:
+                    type: string
+                    expression: '{{ proteinFieldName }}'
+                    description: PDB file used
+              service-execution:
+                service_ref: 'https://discourse.squonk.it/t/job-fragmenstein/110'
+              derived-from: fragments
+      options:
+        type: object
+        required:
+        - smiles
+        - outfile
+        - count
+        - keepHydrogens
+        properties:
+          smiles:
+            title: SMILES to place
+            type: array
+            items:
+              type: string
+          outfile:
+            title: Output file name
+            type: string
+            default: merged.sdf
+            pattern: "^[A-Za-z0-9_/.-]+[.]sdf$"
+          count:
+            title: Number of molecules to generate
+            type: integer
+            default: 1
+            minimum: 1
+          keepHydrogens:
+            title: Keep hydrogens in the outputs
+            type: boolean
+            default: false
+          fragIdField:
+            title: Input field name containing the fragment ID
+            type: string
+            default: _Name
+          smilesFieldName:
+            title: Includes SMILES in output using this field name
+            type: string
+          proteinFieldName:
+            title: Include PDB details in output using this field name
+            type: string
+          proteinFieldValue:
+            title: Use this value for the proteinFieldName (if not specified the file name is used)
+            type: string
+    tests:
+      simple-execution:
+        inputs:
+          fragments:
+          - data/x0032_0A.mol
+          - data/x0103_0A.mol
+          protein: data/apo_example1.pdb
+        options:
+          smiles:
+          - "C=CCSc1nnc(NCc2ccccc2)s1"
+          outfile: results.sdf
+          count: 1
+        checks:
+          exitCode: 0
+          outputs:
+          - name: results.sdf
+            checks:
+            - exists: true
+
+  fragmenstein-combine-multi:
+    name: Combine combinations of fragments using Fragmenstein
+    description: >-
+      Given multiple fragment molecules generate pairs or tripples of these and for each set generate a merged molecule
+      that combines aspects of those fragments.
+      The merged molecules are minimised within the context of the protein and written to a SD-file.
+    version: '1.0.0'
+    category: comp chem
+    keywords:
+    - fragmenstein
+    - fbdd
+    doc-url: fragmenstein/fragmenstein-multi.md
+    image:
+      name: informaticsmatters/squonk2-fragmenstein-nextflow
+      tag: stable
+      project-directory: /data
+      working-directory: /data
+      type: nextflow
+      pull-secret: im-squonk-fragmenstein
+      memory: 3Gi
+      fix-permissions: true
+    command: >-
+      nextflow -log {{ DM_INSTANCE_DIRECTORY }}/nextflow.log
+      run {{ CODE_DIRECTORY|default('/code') }}/frag_merge.nf
+      --fragments '{{ fragments|join(",") }}'
+      --protein '{{ protein }}'
+      --outfile '{{ outfile }}'
+      {% if count is defined %}--count {{ count }}{% endif %}
+      --ref_mols_prop ref_mols
+      {% if fragIdField %}--frag_id_field '{{ fragIdField }}'{% endif %}
+      {% if smilesFieldName %}--smiles_prop '{{ smilesFieldName }}'{% endif %}
+      {% if proteinFieldName %}--protein_prop_name '{{ proteinFieldName }}'{% endif %}
+      {% if proteinFieldValue %}--protein_prop_value '{{ proteinFieldValue }}'{% endif %}
+      {% if minNum is defined %}--min_num {{ minNum }}{% endif %}
+      {% if maxNum is defined %}--max_num {{ maxNum }}{% endif %}
+      {% if maxDist is defined %}--max_dist {{ maxDist }}{% endif %}
+      {% if resultsDir is defined %}--publish_dir '{{ resultsDir }}'{% endif %}
+      -with-trace {{ DM_INSTANCE_DIRECTORY }}/trace.txt
+      -with-report {{ DM_INSTANCE_DIRECTORY }}/report.html
+    variables:
+      order:
+        inputs:
+        - fragments
+        - protein
+        options:
+        - outfile
+        - count
+        - minNum
+        - maxNum
+        - maxDist
+        - keepHydrogens
+        - fragIdField
+        - smilesFieldName
+        - proteinFieldName
+        - proteinFieldValue
+      inputs:
+        type: object
+        required:
+        - fragments
+        - protein
+        properties:
+          fragments:
+            title: Fragment molecules
+            multiple: true
+            mime-types:
+            - chemical/x-mdl-molfile
+            - chemical/x-mdl-sdfile
+            type: file
+          protein:
+            title: PDB file for protein
+            mime-types:
+            - chemical/x-pdb
+            type: file
+      outputs:
+        type: object
+        properties:
+          outputs:
+            title: Merged molecules
+            mime-types:
+            - chemical/x-mdl-sdfile
+            creates: '{{ outfile }}'
+            type: file
+            annotation-properties:
+              fields-descriptor:
+                origin: squonk2-job
+                description: Combine combinations of fragments using Fragmenstein
+                fields:
+                  IDX:
+                    type: string
+                    description: Molecule index
+                    required: true
+                  DDG:
+                    type: number
+                    description: >-
+                      Delta deta G
+                    required: true
+                  RMSD:
+                    type: number
+                    description: RMSD from input fragments
+                    required: true
+                  ref_mols:
+                    type: string
+                    description: Input fragments
+                    required: true
+                  smiles:
+                    type: string
+                    expression: '{{ smilesFieldName }}'
+                    description: Molecule SMILES
+                    required: true
+                  protein:
+                    type: string
+                    expression: '{{ proteinFieldName }}'
+                    description: PDB file used
+              service-execution:
+                service_ref: 'https://discourse.squonk.it/t/job-fragmenstein/110'
+              derived-from: fragments
+      options:
+        type: object
+        required:
+        - outfile
+        properties:
+          outfile:
+            title: Output file name
+            type: string
+            default: merged.sdf
+            pattern: "^[A-Za-z0-9_/.-]+[.]sdf$"
+          count:
+            title: Number of molecules to generate
+            type: integer
+            default: 1
+            minimum: 1
+          keepHydrogens:
+            title: Keep hydrogens in the outputs
+            type: boolean
+            default: false
+          minNum:
+            title: Minimum number to combine
+            type: integer
+            default: 2
+            minimum: 2
+            maximum: 3
+          maxNum:
+            title: Maximum number to combine
+            type: integer
+            default: 2
+            minimum: 2
+            maximum: 3
+          maxDist:
+            title: Maximum distance
+            type: number
+            default: 1.5
+            minimum: 0
+          fragIdField:
+            title: Input field name containing the fragment ID
+            type: string
+            default: _Name
+          smilesFieldName:
+            title: Includes SMILES in output using this field name
+            type: string
+          proteinFieldName:
+            title: Include PDB details in output using this field name
+            type: string
+          proteinFieldValue:
+            title: Use this value for the proteinFieldName (if not specified the file name is used)
+            type: string
+    tests:
+      simple-execution-sdf:
+        inputs:
+          fragments:
+          - data/mpro_hits_3.sdf
+          protein: data/Mpro-x1249_0A_apo-desolv.pdb
+        options:
+          outfile: merges.sdf
+          count: 1
+          minNum: 2
+          maxNum: 2
+        checks:
+          exitCode: 0
+          outputs:
+          - name: merges.sdf
+            checks:
+            - exists: true
+      simple-execution-mols:
+        inputs:
+          fragments:
+          - data/Mpro-x0072_0A.mol
+          - data/Mpro-x0104_0A.mol
+          - data/Mpro-x0107_0A.mol
+          protein: data/Mpro-x1249_0A_apo-desolv.pdb
+        options:
+          outfile: merges.sdf
+          count: 1
+          minNum: 2
+          maxNum: 2
+        checks:
+          exitCode: 0
+          outputs:
+          - name: merges.sdf
+            checks:
+            - exists: true
+      simple-execution-extra-props:
+        inputs:
+          fragments:
+          - data/Mpro-x0072_0A.mol
+          - data/Mpro-x0104_0A.mol
+          - data/Mpro-x0107_0A.mol
+          protein: data/Mpro-x1249_0A_apo-desolv.pdb
+        options:
+          outfile: merges.sdf
+          count: 1
+          minNum: 2
+          maxNum: 2
+          proteinFieldName: ref_pdb
+          proteinFieldValue: bigfatprotein
+          smilesFieldName: mysmiles
+          fragIdField: _Name
+        checks:
+          exitCode: 0
+          outputs:
+          - name: merges.sdf
+            checks:
+            - exists: true
+
+  fragmenstein-combine-multi-scoring:
+    name: Combine combinations of fragments using Fragmenstein with scoring
+    description: >-
+      Given multiple fragment molecules generate pairs or tripples of these and for each set generate a merged molecule
+      that combines aspects of those fragments.
+      The merged molecules are minimised within the context of the protein and written to a SD-file.
+      The molecules are then scored with SA_SCORE to assess the synthetic accessibility score and with SuCOS and
+      Open3DAlign to assess how well the poses correspond to the source fragments.
+    version: '1.0.0'
+    category: comp chem
+    keywords:
+    - fragmenstein
+    - fbdd
+    doc-url: fragmenstein/fragmenstein-multi.md
+    image:
+      name: informaticsmatters/squonk2-fragmenstein-nextflow
+      tag: stable
+      project-directory: /data
+      working-directory: /data
+      type: nextflow
+      pull-secret: im-squonk-fragmenstein
+      memory: 3Gi
+      fix-permissions: true
+    command: >-
+      nextflow -log {{ DM_INSTANCE_DIRECTORY }}/nextflow.log
+      run {{ CODE_DIRECTORY|default('/code') }}/frag_merge_scoring.nf
+      --fragments '{{ fragments|join(",") }}'
+      --protein '{{ protein }}'
+      --outfile '{{ outfile }}'
+      {% if count is defined %}--count {{ count }}{% endif %}
+      --ref_mols_prop ref_mols
+      {% if fragIdField %}--frag_id_field '{{ fragIdField }}'{% endif %}
+      {% if smilesFieldName %}--smiles_prop '{{ smilesFieldName }}'{% endif %}
+      {% if proteinFieldName %}--protein_prop_name '{{ proteinFieldName }}'{% endif %}
+      {% if proteinFieldValue %}--protein_prop_value '{{ proteinFieldValue }}'{% endif %}
+      {% if minNum is defined %}--min_num {{ minNum }}{% endif %}
+      {% if maxNum is defined %}--max_num {{ maxNum }}{% endif %}
+      {% if maxDist is defined %}--max_dist {{ maxDist }}{% endif %}
+      {% if resultsDir is defined %}--publish_dir '{{ resultsDir }}'{% endif %}
+      -with-trace {{ DM_INSTANCE_DIRECTORY }}/trace.txt
+      -with-report {{ DM_INSTANCE_DIRECTORY }}/report.html
+    variables:
+      order:
+        inputs:
+        - fragments
+        - protein
+        options:
+        - outfile
+        - count
+        - minNum
+        - maxNum
+        - maxDist
+        - keepHydrogens
+        - fragIdField
+        - smilesFieldName
+        - proteinFieldName
+        - proteinFieldValue
+      inputs:
+        type: object
+        required:
+        - fragments
+        - protein
+        properties:
+          fragments:
+            title: Fragment molecules
+            multiple: true
+            mime-types:
+            - chemical/x-mdl-molfile
+            - chemical/x-mdl-sdfile
+            type: file
+          protein:
+            title: PDB file for protein
+            mime-types:
+            - chemical/x-pdb
+            type: file
+      outputs:
+        type: object
+        properties:
+          outputs:
+            title: Merged molecules
+            mime-types:
+            - chemical/x-mdl-sdfile
+            creates: '{{ outfile }}'
+            type: file
+            annotation-properties:
+              fields-descriptor:
+                origin: squonk2-job
+                description: Combine combinations of fragments using Fragmenstein
+                fields:
+                  IDX:
+                    type: string
+                    description: Molecule index
+                    required: true
+                  DDG:
+                    type: number
+                    description: >-
+                      Delta deta G
+                    required: true
+                  RMSD:
+                    type: number
+                    description: RMSD from input fragments
+                    required: true
+                  ref_mols:
+                    type: string
+                    description: Input fragments
+                    required: true
+                  smiles:
+                    type: string
+                    expression: '{{ smilesFieldName }}'
+                    description: Molecule SMILES
+                    required: true
+                  protein:
+                    type: string
+                    expression: '{{ proteinFieldName }}'
+                    description: PDB file used
+                  sa_score:
+                    type: number
+                    description: Synthetic accessibility score (1=easy, 10=very difficult)
+                  SuCOS_Score:
+                    type: number
+                    description: SuCOS score (0=none, 1=perfect)
+                  SuCOS_FeatureMap_Score:
+                    type: number
+                    description: SuCOS feature map score (0=none, 1=perfect)
+                  SuCOS_Protrude_Score:
+                    type: number
+                    description: SuCOS protrude score (0=none, 1=perfect)
+                  o3da_score:
+                    type: number
+                    description: Open3DAlign score (larger numbers indicate better alignment)
+                  o3da_score_rel:
+                    type: number
+                    description: Open3DAlign relative score (0=none, 1=perfect)
+                  o3da_align:
+                    type: number
+                    description: Open3DAlign alignment score (larger numbers indicate better alignment)
+              service-execution:
+                service_ref: 'https://discourse.squonk.it/t/job-fragmenstein/110'
+              derived-from: fragments
+      options:
+        type: object
+        required:
+        - outfile
+        properties:
+          outfile:
+            title: Output file name
+            type: string
+            default: merged.sdf
+            pattern: "^[A-Za-z0-9_/.-]+[.]sdf$"
+          count:
+            title: Number of molecules to generate
+            type: integer
+            default: 1
+            minimum: 1
+          keepHydrogens:
+            title: Keep hydrogens in the outputs
+            type: boolean
+            default: false
+          minNum:
+            title: Minimum number to combine
+            type: integer
+            default: 2
+            minimum: 2
+            maximum: 3
+          maxNum:
+            title: Maximum number to combine
+            type: integer
+            default: 2
+            minimum: 2
+            maximum: 3
+          maxDist:
+            title: Maximum distance
+            type: number
+            default: 1.5
+            minimum: 0
+          fragIdField:
+            title: Input field name containing the fragment ID
+            type: string
+            default: _Name
+          smilesFieldName:
+            title: Includes SMILES in output using this field name
+            type: string
+          proteinFieldName:
+            title: Include PDB details in output using this field name
+            type: string
+          proteinFieldValue:
+            title: Use this value for the proteinFieldName (if not specified the file name is used)
+            type: string
+    tests:
+      simple-execution-sdf:
+        inputs:
+          fragments:
+          - data/mpro_hits_3.sdf
+          protein: data/Mpro-x1249_0A_apo-desolv.pdb
+        options:
+          outfile: somedir/merges.sdf
+          count: 1
+          minNum: 2
+          maxNum: 2
+        checks:
+          exitCode: 0
+          outputs:
+          - name: somedir/merges.sdf
+            checks:
+            - exists: true
+      simple-execution-mols:
+        inputs:
+          fragments:
+          - data/Mpro-x0072_0A.mol
+          - data/Mpro-x0104_0A.mol
+          - data/Mpro-x0107_0A.mol
+          protein: data/Mpro-x1249_0A_apo-desolv.pdb
+        options:
+          outfile: merges.sdf
+          count: 1
+          minNum: 2
+          maxNum: 2
+        checks:
+          exitCode: 0
+          outputs:
+          - name: merges.sdf
+            checks:
+            - exists: true
+      simple-execution-extra-props:
+        inputs:
+          fragments:
+          - data/Mpro-x0072_0A.mol
+          - data/Mpro-x0104_0A.mol
+          - data/Mpro-x0107_0A.mol
+          protein: data/Mpro-x1249_0A_apo-desolv.pdb
+        options:
+          outfile: merges.sdf
+          count: 1
+          minNum: 2
+          maxNum: 2
+          proteinFieldName: ref_pdb
+          proteinFieldValue: bigfatprotein
+          smilesFieldName: mysmiles
+          fragIdField: _Name
+        checks:
+          exitCode: 0
+          outputs:
+          - name: merges.sdf
+            checks:
+            - exists: true

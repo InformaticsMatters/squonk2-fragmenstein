@@ -1,0 +1,18 @@
+FROM continuumio/miniconda3:4.12.0
+
+RUN apt-get -y update &&\
+ apt-get -y install procps &&\
+ apt-get clean
+
+ENV PYTHONUNBUFFERED=1
+
+ENV HOME=/code
+WORKDIR ${HOME}
+
+COPY requirements.txt ./
+
+# The requirements.txt file includes the fragmenstein code that provides its own dependencies for things
+# like RDKit, so we leave the fine details of the required versions to fragmenstein
+RUN conda install -y -c conda-forge pip==23.1.2 &&\
+ pip install -r requirements.txt &&\
+ conda init bash

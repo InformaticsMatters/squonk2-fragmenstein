@@ -1,0 +1,6 @@
+FROM informaticsmatters/squonk2-fragmenstein-base:stable
+
+ENV HOME=/code
+WORKDIR ${HOME}
+
+COPY *.py ./

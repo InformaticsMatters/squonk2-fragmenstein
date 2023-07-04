@@ -1,0 +1,8 @@
+.idea
+data-manager/jote
+output
+venv
+__pycache__
+work/
+.nextflow.log*
+.nextflow
