@@ -1,14 +1,17 @@
 ---
 name: build
 
-# Actions that take place on any non-main branch
-# or pull requests to the main branch.
+# Actions that take place on the main branch.
 
 # -----------------
 # Control variables (GitHub Secrets)
 # -----------------
 #
-# (n/a)
+# At the GitHub 'organisation' or 'project' level you must have the following
+# GitHub 'Repository Secrets' defined (i.e. via 'Settings -> Secrets'): -
+#
+# DOCKERHUB_USERNAME
+# DOCKERHUB_TOKEN
 #
 # -----------
 # Environment (GitHub Environments)
@@ -18,13 +21,10 @@ name: build
 
 on:
   push:
-    branches-ignore:
+    branches:
     - 'main'
     tags-ignore:
     - '**'
-  pull_request:
-    branches:
-    - 'main'
 
 jobs:
   build:
@@ -44,8 +44,16 @@ jobs:
     - name: Jote
       run: |
         jote --dry-run
+    - name: Login to DockerHub
+      uses: docker/login-action@v1
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
     - name: Build latest
       run: |
         docker-compose build fragmenstein-base
         docker-compose build fragmenstein
         docker-compose build nextflow
+    - name: Push latest
+      run: |
+        docker-compose push
