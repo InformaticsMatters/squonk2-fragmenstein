@@ -198,6 +198,7 @@ def place_multiple_smiles(fragments, smiles, ids, protein, outputFileName, work_
 
         if count == num_errors: # all attempts fail
             DmLog.emit_event('All invocations failed')
+            raise ValueError('All invocations failed')
 
     return len(smiles), num_placements, num_errors
 
@@ -262,6 +263,7 @@ def combine_fragments(fragments, protein, outputFileName, work_dir=None, fragIdF
 
     if num_runs == num_errors: # all attempts fail
         DmLog.emit_event('All invocations failed')
+        raise ValueError('All invocations failed')
 
     return num_merges, num_failures, num_errors
 
