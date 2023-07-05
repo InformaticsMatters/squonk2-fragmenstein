@@ -1,5 +1,13 @@
 # Fragmenstein workflows
 
+![GitHub](https://img.shields.io/github/license/InformaticsMatters/squonk2-fragmenstein)
+
+![GitHub release (with filter)](https://img.shields.io/github/v/release/InformaticsMatters/squonk2-fragmenstein)
+
+[![latest](https://github.com/InformaticsMatters/squonk2-fragmenstein/actions/workflows/publish-latest.yaml/badge.svg)](https://github.com/InformaticsMatters/squonk2-fragmenstein/actions/workflows/publish-latest.yaml)
+[![stable](https://github.com/InformaticsMatters/squonk2-fragmenstein/actions/workflows/publish-stable.yaml/badge.svg)](https://github.com/InformaticsMatters/squonk2-fragmenstein/actions/workflows/publish-stable.yaml)
+[![build](https://github.com/InformaticsMatters/squonk2-fragmenstein/actions/workflows/build.yaml/badge.svg)](https://github.com/InformaticsMatters/squonk2-fragmenstein/actions/workflows/build.yaml)
+
 This repository is used to build the things needed to execute
 the **Squonk2 Fragmenstein** jobs.
 
