@@ -23,7 +23,6 @@ jobs:
       tag: stable
       project-directory: /data
       working-directory: /data
-      pull-secret: im-squonk-fragmenstein
       memory: 3Gi
       fix-permissions: true
     command: >-
@@ -194,7 +193,6 @@ jobs:
       tag: stable
       project-directory: /data
       working-directory: /data
-      pull-secret: im-squonk-fragmenstein
       memory: 3Gi
       fix-permissions: true
     command: >-
@@ -359,7 +357,6 @@ jobs:
       tag: stable
       project-directory: /data
       working-directory: /data
-      pull-secret: im-squonk-fragmenstein
       memory: 3Gi
       fix-permissions: true
     command: >-
@@ -525,7 +522,6 @@ jobs:
       project-directory: /data
       working-directory: /data
       type: nextflow
-      pull-secret: im-squonk-fragmenstein
       memory: 3Gi
       fix-permissions: true
     command: >-
@@ -750,7 +746,6 @@ jobs:
       project-directory: /data
       working-directory: /data
       type: nextflow
-      pull-secret: im-squonk-fragmenstein
       memory: 3Gi
       fix-permissions: true
     command: >-
