@@ -1,5 +1,5 @@
 ---
-name: publish-stable
+name: publish stable
 
 # Actions that take place on tags.
 # Here we build a 'stable' image, regardless of tag value.

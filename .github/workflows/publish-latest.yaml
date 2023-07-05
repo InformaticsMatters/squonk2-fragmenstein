@@ -1,5 +1,5 @@
 ---
-name: build
+name: publish latest
 
 # Actions that take place on the main branch.
 
