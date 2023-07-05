@@ -12,20 +12,20 @@ This repository is used to build the things needed to execute
 the **Squonk2 Fragmenstein** jobs.
 
 ## Building the workflows
-GitHib Actions take care of official releases of these Job workflows.
+Automated GitHub CI Actions take care of official releases of these Job workflows.
 
 Container images are built and pushed to DockerHub using the image tag `latest` for
-each change on the main branch. Container images built during an _official release_
+each change on the main branch, and images built during an _official release_
 will be tagged `stable`.
 
->   To create an official release of these images create a new **Release** in GitHub,
-    assigning a [semver] style tag to the release, while also not ticking the
-    **Set as a pre-release** checkbox.
+>   To build an _official release_ create a new **Release** in GitHub,
+    assigning a [semver] style tag to the release, while also leaving the
+    **Set as a pre-release** checkbox un-ticked.
 
 Refer to the `docker-compose.yaml` file for the details of the images that are built.
 
-If you want to build your own images you can use the docker compose file in the
-repository, but **DO NOT** publish your own images to DockerHub: -
+If you want to build your own (local) images you can use the docker compose file in the
+repository, but **DO NOT** publish these images to DockerHub: -
 
     python -m venv venv
     source venv/bin/activate
