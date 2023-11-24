@@ -25,6 +25,9 @@ on:
   pull_request:
     branches:
     - 'main'
+  schedule:
+  # Build daily at 6:19am...
+  - cron: '19 6 * * *'
 
 jobs:
   build:
