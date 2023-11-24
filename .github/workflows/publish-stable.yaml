@@ -44,6 +44,14 @@ jobs:
       with:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_TOKEN }}
+    - name: Build and push tag
+      run: |
+        docker-compose build fragmenstein-base
+        docker-compose build fragmenstein
+        docker-compose build nextflow
+        docker-compose push
+      env:
+        IMAGE_TAG: ${{ github.event.release.tag_name }}
     - name: Build and push stable
       run: |
         docker-compose build fragmenstein-base
