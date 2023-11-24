@@ -1,2 +1,2 @@
-docker-compose
 im-jote >= 0.10.1
+docker-compose
