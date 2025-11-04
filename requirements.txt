@@ -1,2 +1,2 @@
 im-data-manager-job-utilities == 1.1.1
-Fragmenstein == 0.13.36
+Fragmenstein == 1.1.1
