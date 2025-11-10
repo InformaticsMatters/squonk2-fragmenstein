@@ -25,13 +25,13 @@ on:
     - 'main'
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v6
       with:
         python-version: '3.11'
     - name: Install dependencies
@@ -39,10 +39,20 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r build-requirements.txt
         pip install -r requirements.txt
-    - name: Jote
+    - name: Jote Dry Run
       run: |
         jote --version
         jote --dry-run
+
+  publish-latest:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v5
+    - name: Set up Docker Compose
+      uses: docker/setup-compose-action@v1
+      with:
+          version: latest
     - name: Login to DockerHub
       uses: docker/login-action@v3
       with:
@@ -50,9 +60,9 @@ jobs:
         password: ${{ secrets.DOCKERHUB_TOKEN }}
     - name: Build latest
       run: |
-        docker-compose build fragmenstein-base
-        docker-compose build fragmenstein
-        docker-compose build nextflow
+        docker compose build fragmenstein-base
+        docker compose build fragmenstein
+        docker compose build nextflow
     - name: Push latest
       run: |
-        docker-compose push
+        docker compose push

@@ -1,2 +1,2 @@
-im-data-manager-job-utilities == 1.1.1
+im-data-manager-job-utilities == 1.2.1
 Fragmenstein == 1.1.1
