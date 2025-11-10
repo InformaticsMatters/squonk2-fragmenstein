@@ -1,4 +1,4 @@
-FROM debian:buster
+FROM debian:11.11
 LABEL maintainer="Tim Dudgeon<tdudgeon@informaticsmatters.com>"
 # Note:     When run by the Data Manager the uid and gid
 #           will be set according to the Project we're running against.
@@ -17,7 +17,7 @@ RUN apt-get update &&\
  procps\
  git &&\
  apt-get clean -y
- 
+
 # Install nextflow. Releases are here: https://github.com/nextflow-io/nextflow/releases
 RUN curl -Ls -o nextflow https://github.com/nextflow-io/nextflow/releases/download/v22.10.0/nextflow-22.10.0-all && \
     chmod 755 nextflow && \
