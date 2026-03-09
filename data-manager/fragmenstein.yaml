@@ -25,6 +25,11 @@ jobs:
       working-directory: /data
       memory: 3Gi
       fix-permissions: true
+      environment:
+      - name: MPLCONFIGDIR
+        value-from:
+          constant:
+            value: '/tmp/matplotlib999'
     command: >-
       /code/merger.py --fragments{% for fragment in fragments %} '{{ fragment }}'{% endfor %}
       --protein '{{ protein }}'
