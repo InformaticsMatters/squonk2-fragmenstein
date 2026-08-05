@@ -23,6 +23,7 @@ from fragmenstein import Wictor
 
 from rdkit import Chem
 import gzip, argparse, time, traceback, os, random, string
+import rdkit_utils
 import utils
 
 
@@ -158,7 +159,7 @@ def place_multiple_smiles(fragments, smiles, ids, protein, outputFileName, work_
     if not os.path.isfile(protein):
         raise ValueError("Protein file not found: " + protein)
 
-    frag_mols = utils.read_molecules(fragments)
+    frag_mols = rdkit_utils.rdk_read_molecule_files(fragments)
     DmLog.emit_event('Read', len(frag_mols), 'fragments')
 
     utils.expand_path(outputFileName)
@@ -233,7 +234,7 @@ def combine_fragments(fragments, protein, outputFileName, work_dir=None, fragIdF
     num_failures = 0
     num_errors = 0
 
-    frag_mols = utils.read_molecules(fragments)
+    frag_mols = rdkit_utils.rdk_read_molecule_files(fragments)
     DmLog.emit_event('Read', len(frag_mols), 'fragments')
 
     utils.expand_path(outputFileName)

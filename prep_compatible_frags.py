@@ -27,6 +27,7 @@ from scipy.sparse.csgraph import connected_components
 import itertools
 
 from dm_job_utilities.dm_log import DmLog
+import rdkit_utils
 import utils
 
 
@@ -64,7 +65,7 @@ def generate_combinations(inputs, output_dir, min_dist, min_num, max_num):
     else:
         output_dir = './'
 
-    mols = utils.read_molecules(inputs)
+    mols = rdkit_utils.rdk_read_molecule_files(inputs)
     DmLog.emit_event('Found', len(mols), 'molecules')
 
     count = 0
