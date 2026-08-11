@@ -28,7 +28,6 @@ import itertools
 
 from dm_job_utilities.dm_log import DmLog
 import rdkit_utils
-import utils
 
 
 def _powerset(iterElems, min_num_elements=2, max_num_emements=None, include_full=False, combinations_instead_permutations=True):

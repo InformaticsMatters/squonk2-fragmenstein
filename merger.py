@@ -24,7 +24,7 @@ from fragmenstein import Wictor
 from rdkit import Chem
 import gzip, argparse, time, traceback, os, random, string
 import rdkit_utils
-import utils
+from dm_job_utilities.utils import expand_path, log, read_delimiter
 
 
 job_id = ''.join(random.choice(string.ascii_lowercase) for i in range(16))
@@ -44,7 +44,7 @@ def create_victor(hits, pdb, work_dir, seed):
         seed = random.randint(0, int(1e6))
     victor = Wictor(hits=hits, pdb_filename=pdb, monster_random_seed=seed)
     if work_dir:
-        utils.log('Setting work_path to', work_dir)
+        log('Setting work_path to', work_dir)
         victor.work_path = work_dir
     return victor
 
@@ -162,7 +162,7 @@ def place_multiple_smiles(fragments, smiles, ids, protein, outputFileName, work_
     frag_mols = rdkit_utils.rdk_read_molecule_files(fragments)
     DmLog.emit_event('Read', len(frag_mols), 'fragments')
 
-    utils.expand_path(outputFileName)
+    expand_path(outputFileName)
 
     count = 0
     num_placements = 0
@@ -193,7 +193,7 @@ def place_multiple_smiles(fragments, smiles, ids, protein, outputFileName, work_
                 mol_idx += 1
 
             except Exception as e:
-                utils.log("Failed to place molecule", count, e)
+                log("Failed to place molecule", count, e)
                 print(traceback.format_exc())
                 num_errors += 1
 
@@ -237,7 +237,7 @@ def combine_fragments(fragments, protein, outputFileName, work_dir=None, fragIdF
     frag_mols = rdkit_utils.rdk_read_molecule_files(fragments)
     DmLog.emit_event('Read', len(frag_mols), 'fragments')
 
-    utils.expand_path(outputFileName)
+    expand_path(outputFileName)
 
     with Chem.SDWriter(outputFileName) as writer:
         for i in range(num_runs):
@@ -259,7 +259,7 @@ def combine_fragments(fragments, protein, outputFileName, work_dir=None, fragIdF
 
             except Exception as e:
                 DmLog.emit_event("Failed to combine molecules", i, e)
-                utils.log(traceback.format_exc())
+                log(traceback.format_exc())
                 num_errors += 1
 
     if num_runs == num_errors: # all attempts fail
@@ -311,7 +311,7 @@ def main():
     if args.smiles_file and args.smiles_strings:
         raise ValueError("Can't specify both smiles-file and smiles-strings arguments.")
 
-    delimiter = utils.read_delimiter(args.delimiter)
+    delimiter = read_delimiter(args.delimiter)
 
     kwargs = {'num_runs': args.count}
     if args.work_dir:
