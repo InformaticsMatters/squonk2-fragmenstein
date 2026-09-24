@@ -16,6 +16,7 @@ process pairwise_prep {
     output:
     path '*.sdf'
 
+    script:
     """
     /code/prep_compatible_frags.py -i '${inputs.join("\' \'")}' --min-num $params.min_num --max-num $params.max_num --min-dist $params.min_dist
     """
