@@ -22,6 +22,7 @@ nextflow run frag_merge_scoring.nf --fragments 'data/Mpro-x0072_0A.mol,data/Mpro
   --outfile merged.sdf
 */
 
+
 nextflow.enable.dsl=2
 
 params.scratch = false
@@ -30,29 +31,19 @@ params.protein = 'protein.pdb'
 params.outfile = 'merges.sdf'
 params.publish_dir = './'
 
-// files - specified as comma separated list of files as a single string (no spaces) to the --fragments argument
-fragments = Channel.of(params.fragments.toString())
-                    .splitCsv()
-                    .flatten()
-                    .map {it -> file(it, checkIfExists:true)}
-                    .toList()
-protein = file(params.protein)
-
 // includes
 include { pairwise_prep } from './nf-processes/fragmenstein/prep_compatible_frags.nf'
 include { combine } from './nf-processes/fragmenstein/fragmenstein_combine.nf'
 include { scoring } from './nf-processes/xchem/scoring.nf'
-include { concatenate_files } from './nf-processes/file/concatenate_files.nf' addParams(
-    outputfile: params.outfile,
-    glob: 'scored_*.sdf')
+include { concatenate_files } from './nf-processes/file/concatenate_files.nf'
 
-dateFormat = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'+00:00'", Locale.UK)
-dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"))
-def curr_t() { dateFormat.format(new java.util.Date()) }
-
-def wrkflw = 'fragmenstein_combine_scoring'
-now = curr_t()
-log.info("$now # PROGRESS -START- $wrkflw:pairwise_prep 1")
+// Self-contained: the parser does not allow statements at the top level, so
+// the formatter is built per call rather than held in a script-level variable.
+def curr_t() {
+    def dateFormat = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'+00:00'", Locale.UK)
+    dateFormat.setTimeZone(TimeZone.getTimeZone('UTC'))
+    return dateFormat.format(new java.util.Date())
+}
 
 // workflows
 workflow fragmenstein_combine_scoring {
@@ -62,47 +53,52 @@ workflow fragmenstein_combine_scoring {
     protein
 
     main:
+    def wrkflw = 'fragmenstein_combine_scoring'
+    log.info("${curr_t()} # PROGRESS -START- $wrkflw:pairwise_prep 1")
+
     pairwise_prep(fragments)
     combine(pairwise_prep.out.flatten(), protein)
     scoring(combine.out[0], combine.out[1])
-    concatenate_files(scoring.out[0].collect())
+    concatenate_files(scoring.out[0].collect(), params.outfile, 'scored_*.sdf')
 
-    int cost = 0
-    int combination_count = 0
-    int fragmenstein_count = 0
-    int scoring_count = 0
+    // Counters are AtomicInteger rather than int: the parser rejects '++',
+    // and these subscribe callbacks can run on different threads.
+    def cost = new java.util.concurrent.atomic.AtomicInteger()
+    def combination_count = new java.util.concurrent.atomic.AtomicInteger()
+    def fragmenstein_count = new java.util.concurrent.atomic.AtomicInteger()
+    def scoring_count = new java.util.concurrent.atomic.AtomicInteger()
 
-    pairwise_prep.out.flatten().subscribe {
-        now = curr_t()
-        if (combination_count == 0) log.info("$now # PROGRESS -DONE- $wrkflw:pairwise_prep 1")
-        combination_count++
-        log.info("$now # PROGRESS -START- $wrkflw:combine $combination_count")
+    pairwise_prep.out.flatten().subscribe { _part ->
+        def now = curr_t()
+        if (combination_count.get() == 0) log.info("$now # PROGRESS -DONE- $wrkflw:pairwise_prep 1")
+        log.info("$now # PROGRESS -START- $wrkflw:combine ${combination_count.incrementAndGet()}")
     }
 
-    combine.out[2].subscribe {
-        cost += new Integer(it)
-        fragmenstein_count += 1
-        now = curr_t()
-        log.info("$now # INFO -COST- $cost $fragmenstein_count")
-        log.info("$now # PROGRESS -DONE- $wrkflw:combine $fragmenstein_count")
-        log.info("$now # PROGRESS -START- $wrkflw:scoring $fragmenstein_count")
+    combine.out[2].subscribe { count_file ->
+        def total = cost.addAndGet(count_file.text.trim() as Integer)
+        def n = fragmenstein_count.incrementAndGet()
+        def now = curr_t()
+        log.info("$now # INFO -COST- $total $n")
+        log.info("$now # PROGRESS -DONE- $wrkflw:combine $n")
+        log.info("$now # PROGRESS -START- $wrkflw:scoring $n")
     }
 
-    scoring.out[1].subscribe {
-        cost = new Integer(it)
-        scoring_count++
-        now = curr_t()
-        log.info("$now # PROGRESS -DONE- $wrkflw:scoring $scoring_count")
+    // NOTE: this deliberately preserves the pre-existing behaviour, which
+    // *sets* the running cost rather than adding to it, and emits no -COST-
+    // line of its own. See squonk2-jobs#72 - changing it changes what is
+    // billed, so it is not being changed here.
+    scoring.out[1].subscribe { count_file ->
+        cost.set(count_file.text.trim() as Integer)
+        def n = scoring_count.incrementAndGet()
+        log.info("${curr_t()} # PROGRESS -DONE- $wrkflw:scoring $n")
     }
 
-    scoring.out[0].collect().subscribe {
-        now = curr_t()
-        log.info("$now # PROGRESS -START- $wrkflw:concatenate_files 1")
+    scoring.out[0].collect().subscribe { _results ->
+        log.info("${curr_t()} # PROGRESS -START- $wrkflw:concatenate_files 1")
     }
 
-    concatenate_files.out.subscribe {
-        now = curr_t()
-        log.info("$now # PROGRESS -DONE- $wrkflw:concatenate_files 1")
+    concatenate_files.out.subscribe { _result ->
+        log.info("${curr_t()} # PROGRESS -DONE- $wrkflw:concatenate_files 1")
     }
 
     emit:
@@ -110,5 +106,14 @@ workflow fragmenstein_combine_scoring {
 }
 
 workflow {
+    // files - specified as comma separated list of files as a single string
+    // (no spaces) to the --fragments argument
+    def fragments = Channel.of(params.fragments.toString())
+                        .splitCsv()
+                        .flatten()
+                        .map { it -> file(it, checkIfExists: true) }
+                        .toList()
+    def protein = file(params.protein)
+
     fragmenstein_combine_scoring(fragments, protein)
 }

@@ -13,8 +13,9 @@ process scoring {
 
     output:
     path "scored_${inputs.name}"
-    env COUNT
+    path 'count.txt' // the number of outputs, used for the cost
 
+    script:
     """
     OUT='scored_${inputs.name}'
 
@@ -41,5 +42,6 @@ process scoring {
     else
       COUNT=0
     fi
+    echo \$COUNT > count.txt
     """
 }

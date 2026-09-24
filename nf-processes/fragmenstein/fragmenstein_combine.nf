@@ -20,8 +20,9 @@ process combine {
     output:
     path 'merged_*.sdf'
     path 'fragments.sdf'
-    env COUNT
+    path 'count.txt' // the number of outputs, used for the cost
 
+    script:
     """
     /code/merger.py -f '$inputs' -p '$protein' -o 'merged_$inputs' ${params.keephs ? '--keep-hydrogens' : ''}\
       --count $params.count\
@@ -34,7 +35,7 @@ process combine {
       # downstream processes need to use the fragments
       cp '$inputs' fragments.sdf
 
-      # record the number of outputs
-      COUNT=$params.count
+      # record the number of outputs, read back by the workflow for the cost
+      echo $params.count > count.txt
     """
 }
