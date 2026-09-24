@@ -1,8 +1,20 @@
-FROM continuumio/miniconda3:25.3.1-1
+FROM python:3.12.14-slim-trixie
 
+# Note:     When run by the Data Manager the uid and gid
+#           will be set according to the Project we're running against.
+#           Consequently we cannot know in advance the user or group id
+#           for execution, and so we must ensure the code runs
+#           as any user.
+
+# libxrender1, libxext6 and libexpat1 are needed by rdkit.Chem.Draw, which
+# Fragmenstein imports. procps is needed by Nextflow's task monitoring.
 RUN apt-get -y update &&\
- apt-get -y install procps &&\
- apt-get clean
+ apt-get -y install --no-install-recommends\
+ procps\
+ libxrender1\
+ libxext6\
+ libexpat1 &&\
+ apt-get clean -y
 
 ENV PYTHONUNBUFFERED=1
 
@@ -11,8 +23,6 @@ WORKDIR ${HOME}
 
 COPY requirements.txt ./
 
-# The requirements.txt file includes the fragmenstein code that provides its own dependencies for things
-# like RDKit, so we leave the fine details of the required versions to fragmenstein
-RUN conda install -y -c conda-forge pip==23.1.2 &&\
- pip install -r requirements.txt &&\
- conda init bash
+# Fragmenstein brings its own RDKit and NumPy, so the versions of those are
+# left to it rather than pinned here.
+RUN pip install --no-cache-dir -r requirements.txt
