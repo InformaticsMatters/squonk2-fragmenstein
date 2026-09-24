@@ -1,4 +1,8 @@
-FROM informaticsmatters/squonk2-fragmenstein-base:stable
+# The tag of the base image to build on. docker-compose passes the same value
+# it tags the base with, so an image is always built against the base from the
+# same commit rather than whatever happens to be published.
+ARG BASE_TAG=stable
+FROM informaticsmatters/squonk2-fragmenstein-base:${BASE_TAG}
 
 ENV HOME=/code
 WORKDIR ${HOME}
