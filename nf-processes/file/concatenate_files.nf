@@ -6,7 +6,7 @@ params.optional = false
 */
 process concatenate_files {
 
-    container 'informaticsmatters/vs-prep:latest'
+    container 'informaticsmatters/vs-prep:3.1.0'
     // 'publishDir' inside an 'if' is not accepted by the Nextflow 25+ parser;
     // 'enabled:' is the supported form. The elvis guards the path, which must
     // still be a valid string even when publishing is disabled.
