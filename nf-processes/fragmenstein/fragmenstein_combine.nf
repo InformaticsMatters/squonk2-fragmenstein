@@ -11,7 +11,7 @@ params.protein_prop_value = null
 
 process combine {
 
-    container 'informaticsmatters/squonk2-fragmenstein:stable'
+    container 'informaticsmatters/squonk2-fragmenstein:1.2.0'
 
     input:
     path inputs

@@ -5,7 +5,7 @@ params.tanimoto = false
 
 process scoring {
 
-    container 'informaticsmatters/vs-prep:latest'
+    container 'informaticsmatters/vs-prep:3.1.0'
 
     input:
     path inputs // .sdf

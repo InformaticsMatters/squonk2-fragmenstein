@@ -12,7 +12,7 @@ jobs:
     description: >-
       Given 2 or more fragment molecules generate a merged molecule that combines aspects of those fragments.
       The merged molecules are minimised within the context of the protein and results written to a SD-file.
-    version: '1.0.0'
+    version: '1.2.0'
     category: comp chem
     keywords:
     - fragmenstein
@@ -20,7 +20,7 @@ jobs:
     doc-url: fragmenstein/fragmenstein.md
     image:
       name: informaticsmatters/squonk2-fragmenstein
-      tag: stable
+      tag: '1.2.0'
       project-directory: /data
       working-directory: /data
       memory: 3Gi
@@ -187,7 +187,7 @@ jobs:
     description: >-
       Place a set of SMILES from an input file onto fragment molecules to generate a conformer that mimics those fragments.
       The placed molecules are minimised within the context of the protein and results written to a SD-file.
-    version: '1.0.0'
+    version: '1.2.0'
     category: comp chem
     keywords:
     - fragmenstein
@@ -195,7 +195,7 @@ jobs:
     doc-url: fragmenstein/fragmenstein.md
     image:
       name: informaticsmatters/squonk2-fragmenstein
-      tag: stable
+      tag: '1.2.0'
       project-directory: /data
       working-directory: /data
       memory: 3Gi
@@ -351,7 +351,7 @@ jobs:
     description: >-
       Place a set of user entered SMILES onto fragment molecules to generate a conformer that mimics those fragments.
       The placed molecules are minimised within the context of the protein and results written to a SD-file.
-    version: '1.0.0'
+    version: '1.2.0'
     category: comp chem
     keywords:
     - fragmenstein
@@ -359,7 +359,7 @@ jobs:
     doc-url: fragmenstein/fragmenstein.md
     image:
       name: informaticsmatters/squonk2-fragmenstein
-      tag: stable
+      tag: '1.2.0'
       project-directory: /data
       working-directory: /data
       memory: 3Gi
@@ -515,7 +515,7 @@ jobs:
       Given multiple fragment molecules generate pairs or tripples of these and for each set generate a merged molecule
       that combines aspects of those fragments.
       The merged molecules are minimised within the context of the protein and written to a SD-file.
-    version: '1.0.0'
+    version: '1.2.0'
     category: comp chem
     keywords:
     - fragmenstein
@@ -523,7 +523,7 @@ jobs:
     doc-url: fragmenstein/fragmenstein-multi.md
     image:
       name: informaticsmatters/squonk2-fragmenstein-nextflow
-      tag: stable
+      tag: '1.2.0'
       project-directory: /data
       working-directory: /data
       type: nextflow
@@ -739,7 +739,7 @@ jobs:
       The merged molecules are minimised within the context of the protein and written to a SD-file.
       The molecules are then scored with SA_SCORE to assess the synthetic accessibility score and with SuCOS and
       Open3DAlign to assess how well the poses correspond to the source fragments.
-    version: '1.0.0'
+    version: '1.2.0'
     category: comp chem
     keywords:
     - fragmenstein
@@ -747,7 +747,7 @@ jobs:
     doc-url: fragmenstein/fragmenstein-multi.md
     image:
       name: informaticsmatters/squonk2-fragmenstein-nextflow
-      tag: stable
+      tag: '1.2.0'
       project-directory: /data
       working-directory: /data
       type: nextflow
